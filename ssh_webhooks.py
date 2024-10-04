@@ -56,16 +56,14 @@ def get_system_status(ssh_client):
     mem_usage = run_command(ssh_client, "free | grep Mem | awk '{print $3/$2 * 100.0}'") 
     disk_usage = run_command(ssh_client, "df -h / | awk 'NR==2 {print $5}'") 
     try:
-        cpu_usage = float(cpu_usage.replace(',', '.')) 
-        mem_usage = float(mem_usage.replace(',', '.'))
-        disk_usage = float(disk_usage.rstrip('%').replace(',', '.')) # Supprimer le symbole '%' s'il est présent
-        disk_usage = float(disk_usage)
+        cpu_usage = round(float(cpu_usage.replace(',', '.')), 1) 
+        mem_usage = round(float(mem_usage.replace(',', '.')), 1)
+        disk_usage = round(float(disk_usage.rstrip('%').replace(',', '.')), 1)
         return f"CPU: {cpu_usage}%, RAM: {mem_usage:.1f}%, Disque: {disk_usage}%" 
     
     except ValueError as e: 
         logger.error(f"Erreur lors de la conversion des valeurs : {e}")
-        return f"CPU: {cpu_usage}, RAM: {mem_usage}, Disque: {disk_usage}"
-
+        return f"CPU: {cpu_usage:.1f}%, RAM: {mem_usage:.1f}%, Disque: {disk_usage:.1f}%" 
 def send_chat_message(message): 
     payload = {"text": message} 
     try:    
@@ -94,9 +92,9 @@ def main():
                     status_message += " Aucune mise à jour disponible\n" 
                 ssh_client.close()
             else:
-                status_message += f"{server['name']}: Impossible de se connecter\n" 
+                status_message += f"**{server['name']}**: Impossible de se connecter\n" 
         except Exception as e: 
-            status_message += f"{server['name']}: Erreur - {str(e)}\n"
+            status_message += f"**{server['name']}**: Erreur - {str(e)}\n"
         status_message += "\n" 
 
     logger.info("Envoi du rapport au chat Google...")    
