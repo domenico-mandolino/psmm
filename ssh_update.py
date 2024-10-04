@@ -1,4 +1,3 @@
-(myenv) domenico@cli-domenico:~/psmm$ cat ssh_update.py
 #!/usr/bin/env python3
 
 import paramiko 
@@ -23,14 +22,14 @@ servers = [
 ]
 # Configuration SSH
 ssh_key_path = '/home/domenico/.ssh/domid_rsa'
-ssh_password = "mot de passe sudo monitor" 
+ssh_password = "monitor" 
 
 # Configuration e-mail
 email_config = { 
     'smtp_server': 'smtp.gmail.com', 
     'smtp_port': 587, 'sender_email': 
     'domenico.mandolino@laplateforme.io', 
-    'sender_password': 'mot de passe application', 
+    'sender_password': 'ldaspudelyjzcrda', 
     'recipient_email': 'domenico.mandolino@laplateforme.io'
 }
 def ssh_connect(hostname, username, ssh_key, passphrase): 
@@ -58,16 +57,19 @@ def run_command(ssh_client, command, sudo=False):
 def check_updates(ssh_client): 
     logger.info("Vérification des mises à jour disponibles...") 
     update_output = run_command(ssh_client, "apt update" , sudo=True) 
-    logger.info(f"Résultat de 'apt update':\n{update_output}") 
     upgradable = run_command(ssh_client, "apt list --upgradable", sudo=True) 
-    logger.info(f"Paquets pouvant être mis à jour:\n{upgradable}") 
-    return "All packages are up to date" not in update_output and upgradable.strip() != ""
+    if upgradable.strip():
+        logger.info(f"Mises à jour disponibles : {upgradable.count('/')} paquet(s)")
+    else:
+        logger.info("Aucune mise à jours disponible") 
+    return boll(upgradable.strip)
 
 def perform_updates(ssh_client): 
     logger.info("Exécution des mises à jour...") 
     result = run_command(ssh_client, "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y", sudo=True) 
-    logger.info(f"Résultat de la mise à jour:\n{result}")
-    return result
+    updated = sum(1 for line in result.splitlines() if "Inst " in line) 
+    logger.info(f"{updated} paquet(s) mis à jour")
+    return updated > 0
 
 def check_reboot_required(ssh_client): 
     result = run_command(ssh_client, "[ -f /var/run/reboot-required ] && echo 'Reboot required' || echo 'No reboot needed'") 
@@ -99,29 +101,21 @@ def main():
             ssh_client = ssh_connect(server['hostname'], server['username'], ssh_key_path, ssh_passphrase)
             if ssh_client:
                 if check_updates(ssh_client): 
-                    logger.info(f"Mises à jour disponibles pour {server['name']}. Installation en cours...") 
-                    update_result = perform_updates(ssh_client) 
-                    logger.info(f"Résultat de la mise à jour pour {server['name']}:\n{update_result}")
-                
-                    reboot_status = check_reboot_required(ssh_client) 
-                    if "Reboot required" in reboot_status: 
-                        reboot_required_servers.append(server['name']) 
-                        logger.warning(f"Redémarrage nécessaire pour {server['name']} après la mise à jour.")
+                    if perform_updates(ssh_client):
+                        reboot_status = check_reboot_required(ssh_client)
+                        if "Reboot required" in reboot_status: 
+                            reboot_required_servers.append(server['name']) 
+                            logger.warning(f"Redémarrage nécessaire pour {server['name']} après la mise à jour.")
+                else: logger.info(f"{server['name']} est à jour") 
+        except Exception as e:
+            logger.error(f"Erreur pour {server['name']}: {e}")
 
-                else: logger.info(f"Aucune mise à jour nécessaire pour {server['name']}.")
-            
-                ssh_client.close() 
-            else:
-                logger.error(f"Impossible de se connecter à {server['name']} ({server['hostname']})")        
-        except Exception as e: 
-            logger.error(f"Erreur lors de la mise à jour de {server['name']}: {e}") 
 
-    if reboot_required_servers:
-        subject = "Redémarrage nécessaire après mises à jour" 
-        body = f"Les serveurs suivants nécessitent un redémarrage après les mises à jour :\n\n" 
-        body += "\n".join(reboot_required_servers) 
-        send_email(subject, body)
-
+    if reboot_required_servers: 
+        logger.warning(f"Serveurs nécessitant un redémarrage : {', '.join(reboot_required_servers)}")
+        send_email("Redémarrage nécessaire après mises à jour",
+                   f"Les serveurs suivants nécessitent un redémarrage :\n{', '.join(reboot_required_servers)}") 
+    else:
+        logger.info("Aucun serveur ne nécessite de redémarrage")
 if __name__ == "__main__":
     main()
-(myenv) domenico@cli-domenico:~/psmm$ 
