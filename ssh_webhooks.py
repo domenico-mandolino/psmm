@@ -22,10 +22,10 @@ servers = [ {"name": "Serveur FTP", "hostname": "192.168.10.185", "username": "m
 
 # Configuration SSH
 ssh_key_path = '/home/domenico/.ssh/domid_rsa' 
-ssh_password = "monitor" # Mot de passe SSH et sudo
+ssh_password = " " # Mot de passe SSH et sudo
 
 # URL du webhook Google Chat
-WEBHOOK_URL = "https://chat.googleapis.com/v1/spaces/AAAAzB7cgLk/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=hgCR8bvtIVhJgWPajj0a6lON2XGvoStTIfCkd7QXmF0" 
+WEBHOOK_URL = "" 
 
 def ssh_connect(hostname, username, ssh_key, passphrase):
     client = paramiko.SSHClient() 
