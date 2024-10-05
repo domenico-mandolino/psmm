@@ -22,14 +22,14 @@ servers = [
 ]
 # Configuration SSH
 ssh_key_path = '/home/domenico/.ssh/domid_rsa'
-ssh_password = "monitor" 
+ssh_password = "" 
 
 # Configuration e-mail
 email_config = { 
     'smtp_server': 'smtp.gmail.com', 
     'smtp_port': 587, 'sender_email': 
     'domenico.mandolino@laplateforme.io', 
-    'sender_password': 'ldaspudelyjzcrda', 
+    'sender_password': '', 
     'recipient_email': 'domenico.mandolino@laplateforme.io'
 }
 def ssh_connect(hostname, username, ssh_key, passphrase): 
