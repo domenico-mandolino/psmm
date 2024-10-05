@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 db_config = {
     'host': '192.168.10.152',
     'user': 'dome',
-    'password': 'x',
+    'password': '',
     'database': 'plateflop'
 }
 
